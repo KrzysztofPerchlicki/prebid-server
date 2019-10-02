@@ -1,0 +1,11 @@
+{
+  "params": {
+    "placementId": 13232361,
+    "video": {
+      "skippable": true,
+      "playback_method": [
+        "auto_play_sound_off"
+      ]
+    }
+  }
+}
