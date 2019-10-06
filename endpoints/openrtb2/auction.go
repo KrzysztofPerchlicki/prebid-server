@@ -993,7 +993,7 @@ func (deps *endpointDeps) processStoredRequests(ctx context.Context, requestJson
 	// Apply the Stored BidRequest, if it exists
 	resolvedRequest := requestJson
 	if hasStoredBidRequest {
-		resolvedRequest, err = jsonpatch.MergePatch(storedRequests[storedBidRequestId], requestJson)
+		resolvedRequest, err = jsonpatch.MergePatch(requestJson, storedRequests[storedBidRequestId])
 		if err != nil {
 			hasErr, Err := getJsonSyntaxError(requestJson)
 			if hasErr {
@@ -1031,7 +1031,7 @@ func (deps *endpointDeps) processStoredRequests(ctx context.Context, requestJson
 	// and Prebid Server defers to the HTTP Request to resolve conflicts, it's safe to
 	// assume that the request.imp data did not change when applying the Stored BidRequest.
 	for i := 0; i < len(impIds); i++ {
-		resolvedImp, err := jsonpatch.MergePatch(storedImps[impIds[i]], imps[idIndices[i]])
+		resolvedImp, err := jsonpatch.MergePatch(imps[idIndices[i]], storedImps[impIds[i]])
 		if err != nil {
 			hasErr, Err := getJsonSyntaxError(imps[idIndices[i]])
 			if hasErr {
