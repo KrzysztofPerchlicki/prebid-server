@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/golang/glog"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -63,11 +64,16 @@ type appnexusParams struct {
 }
 
 type appnexusImpExtAppnexus struct {
-	PlacementID       int             `json:"placement_id,omitempty"`
-	Keywords          string          `json:"keywords,omitempty"`
-	TrafficSourceCode string          `json:"traffic_source_code,omitempty"`
-	UsePmtRule        *bool           `json:"use_pmt_rule,omitempty"`
-	PrivateSizes      json.RawMessage `json:"private_sizes,omitempty"`
+	PlacementID        int                 `json:"placement_id,omitempty"`
+	Keywords           string              `json:"keywords,omitempty"`
+	AdditionalKeywords map[string][]string `json:"additionalKeywords,omitempty"`
+	TrafficSourceCode  string              `json:"traffic_source_code,omitempty"`
+	UsePmtRule         *bool               `json:"use_pmt_rule,omitempty"`
+	PrivateSizes       json.RawMessage     `json:"private_sizes,omitempty"`
+}
+
+type appnexusImpExtBidder struct {
+	Bidder appnexusImpExtAppnexus `json:"bidder"`
 }
 
 type appnexusImpExt struct {
@@ -469,11 +475,24 @@ func preprocess(imp *openrtb.Imp, defaultDisplayManagerVer string) (string, erro
 	if len(imp.DisplayManagerVer) == 0 && len(defaultDisplayManagerVer) > 0 {
 		imp.DisplayManagerVer = defaultDisplayManagerVer
 	}
+	var appnexusExtBidder appnexusImpExtBidder
+	if err := json.Unmarshal(imp.Ext, &appnexusExtBidder); err != nil {
+		glog.Errorf("Some json format error occurred", err)
+	}
+	var additionalKeywords = appnexusExtBidder.Bidder.AdditionalKeywords
+	var keywords []*openrtb_ext.ExtImpAppnexusKeyVal
+	for key := range additionalKeywords {
+		keyword := openrtb_ext.ExtImpAppnexusKeyVal{
+			Key:    key,
+			Values: additionalKeywords[key],
+		}
+		keywords = append(keywords, &keyword)
+	}
 
 	impExt := appnexusImpExt{Appnexus: appnexusImpExtAppnexus{
 		PlacementID:       appnexusExt.PlacementId,
 		TrafficSourceCode: appnexusExt.TrafficSourceCode,
-		Keywords:          makeKeywordStr(appnexusExt.Keywords),
+		Keywords:          makeKeywordStr(keywords),
 		UsePmtRule:        appnexusExt.UsePmtRule,
 		PrivateSizes:      appnexusExt.PrivateSizes,
 	}}
